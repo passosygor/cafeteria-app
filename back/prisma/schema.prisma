@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  FUNCIONARIO
+  CLIENTE
+}
+
+enum PlanoTipo {
+  MENSAL
+  ANUAL
+}
+
+enum PlanoStatus {
+  ATIVO
+  INATIVO
+  CANCELADO
+}
+
+enum MovimentoTipo {
+  ENTRADA
+  SAIDA
+}
+
+enum PedidoStatus {
+  PENDENTE
+  EM_PREPARO
+  PRONTO
+  RETIRADO
+  CANCELADO
+}
+
+model Usuario {
+  id         Int       @id @default(autoincrement())
+  nome       String
+  email      String    @unique
+  senha      String
+  cpf        String    @unique
+  telefone   String
+  role       Role      @default(CLIENTE)
+  ativo      Boolean   @default(true)
+  criadoEm  DateTime  @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  assinatura Assinatura?
+  pedidos    Pedido[]
+
+  @@map("usuarios")
+}
+
+model Categoria {
+  id       Int       @id @default(autoincrement())
+  nome     String    @unique
+  descricao String?
+  ativo    Boolean   @default(true)
+
+  produtos Produto[]
+
+  @@map("categorias")
+}
+
+model Produto {
+  id          Int       @id @default(autoincrement())
+  nome        String
+  descricao   String?
+  preco       Decimal   @db.Decimal(10, 2)
+  estoque     Int       @default(0)
+  estoqueMin  Int       @default(5)
+  ativo       Boolean   @default(true)
+  criadoEm   DateTime  @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  categoriaId Int
+  categoria   Categoria @relation(fields: [categoriaId], references: [id])
+
+  movimentos   MovimentoEstoque[]
+  itensPedido  ItemPedido[]
+
+  @@map("produtos")
+}
+
+model MovimentoEstoque {
+  id         Int           @id @default(autoincrement())
+  tipo       MovimentoTipo
+  quantidade Int
+  observacao String?
+  criadoEm  DateTime      @default(now())
+
+  produtoId  Int
+  produto    Produto       @relation(fields: [produtoId], references: [id])
+
+  @@map("movimentos_estoque")
+}
+
+model Assinatura {
+  id          Int         @id @default(autoincrement())
+  plano       PlanoTipo
+  status      PlanoStatus @default(ATIVO)
+  valorMensal Decimal     @db.Decimal(10, 2)
+  inicioEm    DateTime    @default(now())
+  renovacaoEm DateTime
+  criadoEm   DateTime    @default(now())
+
+  usuarioId   Int         @unique
+  usuario     Usuario     @relation(fields: [usuarioId], references: [id])
+
+  @@map("assinaturas")
+}
+
+model Pedido {
+  id         Int          @id @default(autoincrement())
+  status     PedidoStatus @default(PENDENTE)
+  total      Decimal      @db.Decimal(10, 2)
+  observacao String?
+  criadoEm  DateTime     @default(now())
+  atualizadoEm DateTime  @updatedAt
+
+  usuarioId  Int
+  usuario    Usuario      @relation(fields: [usuarioId], references: [id])
+
+  itens      ItemPedido[]
+
+  @@map("pedidos")
+}
+
+model ItemPedido {
+  id         Int     @id @default(autoincrement())
+  quantidade Int
+  precoUnit  Decimal @db.Decimal(10, 2)
+
+  pedidoId   Int
+  pedido     Pedido  @relation(fields: [pedidoId], references: [id])
+
+  produtoId  Int
+  produto    Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("itens_pedido")
+}
