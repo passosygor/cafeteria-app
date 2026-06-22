@@ -1,3 +1,5 @@
+# Ygor dos Passos e Matheus Mathias 
+
 # ☕ Sistema de Gestão – Cafeteria
 
 Sistema B2B para gestão interna de uma cafeteria, com controle de produtos, estoque, pedidos (takeaway), usuários e assinaturas.
