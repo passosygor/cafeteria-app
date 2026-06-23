@@ -6,38 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  FUNCIONARIO
-  CLIENTE
-}
-
-enum PlanoTipo {
-  MENSAL
-  ANUAL
-}
-
-enum PlanoStatus {
-  ATIVO
-  INATIVO
-  CANCELADO
-}
-
-enum MovimentoTipo {
-  ENTRADA
-  SAIDA
-}
-
-enum PedidoStatus {
-  PENDENTE
-  EM_PREPARO
-  PRONTO
-  RETIRADO
-  CANCELADO
 }
 
 model Usuario {
@@ -47,7 +17,7 @@ model Usuario {
   senha      String
   cpf        String    @unique
   telefone   String
-  role       Role      @default(CLIENTE)
+  role       String    @default("CLIENTE")
   ativo      Boolean   @default(true)
   criadoEm  DateTime  @default(now())
   atualizadoEm DateTime @updatedAt
@@ -73,7 +43,7 @@ model Produto {
   id          Int       @id @default(autoincrement())
   nome        String
   descricao   String?
-  preco       Decimal   @db.Decimal(10, 2)
+  preco       Decimal
   estoque     Int       @default(0)
   estoqueMin  Int       @default(5)
   ativo       Boolean   @default(true)
@@ -90,43 +60,43 @@ model Produto {
 }
 
 model MovimentoEstoque {
-  id         Int           @id @default(autoincrement())
-  tipo       MovimentoTipo
+  id         Int      @id @default(autoincrement())
+  tipo       String
   quantidade Int
   observacao String?
-  criadoEm  DateTime      @default(now())
+  criadoEm  DateTime @default(now())
 
   produtoId  Int
-  produto    Produto       @relation(fields: [produtoId], references: [id])
+  produto    Produto  @relation(fields: [produtoId], references: [id])
 
   @@map("movimentos_estoque")
 }
 
 model Assinatura {
-  id          Int         @id @default(autoincrement())
-  plano       PlanoTipo
-  status      PlanoStatus @default(ATIVO)
-  valorMensal Decimal     @db.Decimal(10, 2)
-  inicioEm    DateTime    @default(now())
+  id          Int      @id @default(autoincrement())
+  plano       String
+  status      String   @default("ATIVO")
+  valorMensal Decimal
+  inicioEm    DateTime @default(now())
   renovacaoEm DateTime
-  criadoEm   DateTime    @default(now())
+  criadoEm   DateTime @default(now())
 
-  usuarioId   Int         @unique
-  usuario     Usuario     @relation(fields: [usuarioId], references: [id])
+  usuarioId   Int      @unique
+  usuario     Usuario  @relation(fields: [usuarioId], references: [id])
 
   @@map("assinaturas")
 }
 
 model Pedido {
-  id         Int          @id @default(autoincrement())
-  status     PedidoStatus @default(PENDENTE)
-  total      Decimal      @db.Decimal(10, 2)
+  id         Int      @id @default(autoincrement())
+  status     String   @default("PENDENTE")
+  total      Decimal
   observacao String?
-  criadoEm  DateTime     @default(now())
-  atualizadoEm DateTime  @updatedAt
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
 
   usuarioId  Int
-  usuario    Usuario      @relation(fields: [usuarioId], references: [id])
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
 
   itens      ItemPedido[]
 
@@ -136,7 +106,7 @@ model Pedido {
 model ItemPedido {
   id         Int     @id @default(autoincrement())
   quantidade Int
-  precoUnit  Decimal @db.Decimal(10, 2)
+  precoUnit  Decimal
 
   pedidoId   Int
   pedido     Pedido  @relation(fields: [pedidoId], references: [id])

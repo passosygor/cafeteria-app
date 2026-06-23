@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { initDatabase } = require('./prisma/init-db');
 
 const authRoutes     = require('./routes/auth.routes');
 const produtoRoutes  = require('./routes/produto.routes');
@@ -34,6 +35,14 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`☕ Servidor da Cafeteria rodando na porta ${PORT}`);
-});
+
+initDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`☕ Servidor da Cafeteria rodando na porta ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('❌ Falha ao inicializar o banco de dados:', err.message);
+    process.exit(1);
+  });

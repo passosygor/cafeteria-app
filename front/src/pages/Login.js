@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 export default function Login() {
@@ -57,13 +57,22 @@ export default function Login() {
               required
             />
           </div>
-          <button className="btn btn-primario" style={{ width: '100%', justifyContent: 'center', padding: '12px' }} disabled={carregando}>
+          <button className="btn btn-primario auth-btn-full" disabled={carregando}>
             {carregando ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: 24, fontSize: '0.78rem', color: '#999' }}>
-          Acesso restrito à equipe autorizada
+        <div className="auth-divider">
+          <span>ou</span>
+        </div>
+
+        <p className="auth-link-text">
+          Não tem conta?{' '}
+          <Link to="/cadastro" className="auth-link">Criar conta</Link>
+        </p>
+
+        <p className="auth-hint">
+          Contas de teste: admin@cafeteria.com / admin123
         </p>
       </div>
     </div>

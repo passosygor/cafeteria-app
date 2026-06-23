@@ -11,11 +11,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Redireciona para login se o token expirar
+// Redireciona para login se o token expirar (exceto nas rotas de autenticação)
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 || err.response?.status === 403) {
+    const isAuthRoute = err.config?.url?.includes('/auth/login') || err.config?.url?.includes('/auth/cadastrar');
+    const hasToken = localStorage.getItem('token');
+
+    if (!isAuthRoute && hasToken && (err.response?.status === 401 || err.response?.status === 403)) {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
       window.location.href = '/login';

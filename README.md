@@ -10,7 +10,7 @@ Sistema B2B para gestão interna de uma cafeteria, com controle de produtos, est
 
 - **Backend:** Node.js + Express
 - **ORM:** Prisma
-- **Banco de dados:** PostgreSQL (pgAdmin)
+- **Banco de dados:** SQLite (criado automaticamente na primeira execução)
 - **Frontend:** React
 
 ---
@@ -27,8 +27,9 @@ cafeteria/
 │   ├── middlewares/
 │   └── prisma/
 │       ├── schema.prisma
+│       ├── init-db.js     ← Inicializa banco e seed automaticamente
 │       ├── seed.js
-│       ├── seed.sql       ← Script SQL puro (pgAdmin)
+│       ├── migrations/
 │       └── client.js
 └── front/
     └── src/
@@ -45,48 +46,32 @@ cafeteria/
 ### 1. Pré-requisitos
 
 - Node.js 18+
-- PostgreSQL instalado e rodando (pgAdmin)
 
-### 2. Banco de dados (pgAdmin)
+> **Não é necessário instalar PostgreSQL.** O banco SQLite é criado automaticamente na primeira execução do backend.
 
-1. Abra o **pgAdmin** e crie um banco chamado `cafeteria_db`
-2. Você pode executar manualmente o arquivo `back/prisma/seed.sql` no Query Tool do pgAdmin  
-   **OU** usar o Prisma (recomendado, veja o passo 4)
-
-### 3. Configurar o Backend
+### 2. Configurar e iniciar o Backend
 
 ```bash
 cd back
-cp .env.example .env
-# Edite o .env com suas credenciais do PostgreSQL
+cp .env.example .env   # ou copie manualmente no Windows
 npm install
-```
-
-O arquivo `.env` deve conter:
-```
-DATABASE_URL="postgresql://postgres:SUA_SENHA@localhost:5432/cafeteria_db"
-JWT_SECRET="cafeteria_jwt_secret"
-PORT=3001
-```
-
-### 4. Rodar as migrations e seed (Prisma)
-
-```bash
-cd back
-npm run prisma:generate
-npm run prisma:migrate
-node prisma/seed.js
-```
-
-### 5. Iniciar o backend
-
-```bash
-cd back
 npm run dev
 # Servidor rodando em http://localhost:3001
 ```
 
-### 6. Configurar e rodar o Frontend
+Na **primeira execução**, o servidor:
+1. Gera o Prisma Client
+2. Aplica as migrations (cria `prisma/cafeteria.db`)
+3. Popula o banco com dados iniciais (usuários, categorias, produtos)
+
+O arquivo `.env` padrão:
+```
+DATABASE_URL="file:./cafeteria.db"
+JWT_SECRET="cafeteria_jwt_secret_troque_em_producao"
+PORT=3001
+```
+
+### 3. Configurar e rodar o Frontend
 
 ```bash
 cd front
@@ -105,6 +90,8 @@ npm start
 | func@cafeteria.com | admin123 | Funcionário |
 | cliente@email.com | admin123 | Cliente |
 
+Também é possível **criar uma conta nova** pela tela de login → "Criar conta".
+
 ---
 
 ## 🔗 Principais Rotas da API
@@ -112,7 +99,7 @@ npm start
 | Método | Rota | Descrição |
 |---|---|---|
 | POST | /api/auth/login | Login |
-| POST | /api/auth/cadastrar | Cadastro |
+| POST | /api/auth/cadastrar | Cadastro de cliente |
 | GET | /api/produtos | Listar produtos |
 | POST | /api/produtos | Criar produto |
 | PUT | /api/produtos/:id | Atualizar produto |
@@ -149,3 +136,22 @@ O CRUD completo de produtos inclui:
 | Gerenciar Categorias | ✅ | ✅ | ❌ |
 | Criar Pedidos | ✅ | ✅ | ✅ |
 | Gerenciar Usuários | ✅ | ❌ | ❌ |
+
+---
+
+## 🗄️ Banco de dados
+
+O arquivo do banco fica em `back/prisma/cafeteria.db` (criado automaticamente). Para resetar tudo:
+
+```bash
+cd back
+# Apague o arquivo cafeteria.db e reinicie o servidor
+npm run dev
+```
+
+Para rodar o seed manualmente:
+
+```bash
+cd back
+npm run prisma:seed
+```

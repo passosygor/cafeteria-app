@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
+import Cadastro from './pages/Cadastro';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Produtos from './pages/Produtos';
@@ -22,6 +23,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/" element={<RotaProtegida><Layout /></RotaProtegida>}>
           <Route index element={<Dashboard />} />
           <Route path="produtos" element={<Produtos />} />

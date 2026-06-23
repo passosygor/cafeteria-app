@@ -5,7 +5,12 @@ async function listar(req, res) {
     const { status, usuarioId } = req.query;
     const where = {};
     if (status) where.status = status;
-    if (usuarioId) where.usuarioId = Number(usuarioId);
+
+    if (req.usuario.role === 'CLIENTE') {
+      where.usuarioId = req.usuario.id;
+    } else if (usuarioId) {
+      where.usuarioId = Number(usuarioId);
+    }
 
     const pedidos = await prisma.pedido.findMany({
       where,
@@ -31,6 +36,9 @@ async function buscarPorId(req, res) {
       },
     });
     if (!pedido) return res.status(404).json({ erro: 'Pedido não encontrado' });
+    if (req.usuario.role === 'CLIENTE' && pedido.usuarioId !== req.usuario.id) {
+      return res.status(403).json({ erro: 'Acesso negado' });
+    }
     res.json(pedido);
   } catch (err) {
     res.status(500).json({ erro: 'Erro ao buscar pedido', detalhes: err.message });
@@ -39,7 +47,9 @@ async function buscarPorId(req, res) {
 
 async function criar(req, res) {
   const { usuarioId, itens, observacao } = req.body;
-  if (!usuarioId || !itens || itens.length === 0) {
+  const clienteId = req.usuario.role === 'CLIENTE' ? req.usuario.id : Number(usuarioId);
+
+  if (!clienteId || !itens || itens.length === 0) {
     return res.status(400).json({ erro: 'usuarioId e itens são obrigatórios' });
   }
 
@@ -67,7 +77,7 @@ async function criar(req, res) {
       }
 
       return tx.pedido.create({
-        data: { usuarioId: Number(usuarioId), total, observacao, itens: { create: itensComPreco } },
+        data: { usuarioId: clienteId, total, observacao, itens: { create: itensComPreco } },
         include: { itens: { include: { produto: { select: { nome: true } } } }, usuario: { select: { nome: true } } },
       });
     });
