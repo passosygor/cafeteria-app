@@ -63,16 +63,16 @@ export default function Login() {
         </form>
 
         <div className="auth-divider">
-          <span>ou</span>
+          <span>  </span>
         </div>
 
-        <p className="auth-link-text">
+        {/* <p className="auth-link-text">
           Não tem conta?{' '}
           <Link to="/cadastro" className="auth-link">Criar conta</Link>
-        </p>
+        </p> */}
 
         <p className="auth-hint">
-          Contas de teste: admin@cafeteria.com / admin123
+          Entrada apenas de funcionarios autorizados  
         </p>
       </div>
     </div>
