@@ -249,8 +249,7 @@ export default function Layout() {
       {/* ── Botão toggle desktop ── */}
       {!isMobile && (
         <button
-          className="sidebar-toggle"
-          style={{ left: sidebarAberta ? 240 : 14 }}
+          className={`sidebar-toggle ${sidebarAberta ? '' : 'sidebar-toggle-fechado'}`}
           onClick={() => setSidebarAberta(!sidebarAberta)}
           title={sidebarAberta ? 'Ocultar menu' : 'Mostrar menu'}
         >
