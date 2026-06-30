@@ -1,4 +1,4 @@
-# Ygor dos Passos e Matheus Mathias 
+# Ygor dos Passos, Matheus Mathias e Nicolas Carlos
 
 # ☕ Sistema de Gestão – Cafeteria
 

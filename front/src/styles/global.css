@@ -554,3 +554,94 @@ body {
   .sidebar { transform: translateX(-100%); }
   .conteudo { margin-left: 0; }
 }
+
+/* ── Sidebar toggle ── */
+.sidebar-toggle {
+  position: fixed;
+  top: 50%;
+  left: 240px;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  width: 28px;
+  height: 48px;
+  background: var(--cafe-medio);
+  color: var(--creme);
+  border: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 0 8px rgba(44,26,14,0.2);
+  transition: left 0.25s ease, background 0.2s;
+}
+
+.sidebar-toggle:hover {
+  background: var(--cafe-escuro);
+}
+
+.sidebar-fechada {
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+.sidebar-toggle[data-fechada="true"] {
+  left: 14px;
+}
+
+.conteudo-expandido {
+  margin-left: 0 !important;
+}
+
+/* Quando a sidebar está fechada, move o botão para a borda */
+.sidebar-fechada ~ .conteudo ~ .sidebar-toggle,
+.layout:has(.sidebar-fechada) .sidebar-toggle {
+  left: 14px;
+}
+
+/* Override: quando sidebar fechada, botão fica na borda esquerda */
+.layout:has(.sidebar-fechada) .sidebar-toggle {
+  left: 14px;
+  border-radius: 0 8px 8px 0;
+}
+
+/* ── Carteira ── */
+.carteira {
+  margin: 12px 0 8px;
+  background: rgba(200,149,108,0.12);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.carteira-saldo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.7);
+  margin-bottom: 8px;
+}
+
+.carteira-saldo strong {
+  color: var(--cafe-claro);
+  font-size: 0.95rem;
+}
+
+.btn-saldo {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--cafe-claro);
+  color: var(--cafe-escuro);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: var(--transicao);
+}
+
+.btn-saldo:hover {
+  background: #d4a47a;
+  transform: translateY(-1px);
+}
