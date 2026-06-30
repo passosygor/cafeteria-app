@@ -542,34 +542,20 @@ body {
   margin-top: 4px;
 }
 
-/* Responsivo */
-@media (max-width: 768px) {
-  .sidebar { width: 200px; }
-  .conteudo { margin-left: 200px; padding: 20px; }
-  .form-grid-2 { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: 1fr 1fr; }
-}
-
-@media (max-width: 540px) {
-  .sidebar { transform: translateX(-100%); }
-  .conteudo { margin-left: 0; }
-}
-
-/* ── Sidebar toggle ── */
+/* ── Sidebar toggle (desktop) ── */
 .sidebar-toggle {
   position: fixed;
   top: 50%;
-  left: 240px;
-  transform: translate(-50%, -50%);
+  transform: translateY(-50%);
   z-index: 200;
-  width: 28px;
+  width: 20px;
   height: 48px;
   background: var(--cafe-medio);
   color: var(--creme);
   border: none;
   border-radius: 0 8px 8px 0;
   cursor: pointer;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -577,34 +563,63 @@ body {
   transition: left 0.25s ease, background 0.2s;
 }
 
-.sidebar-toggle:hover {
-  background: var(--cafe-escuro);
-}
+.sidebar-toggle:hover { background: var(--cafe-escuro); }
 
 .sidebar-fechada {
   transform: translateX(-100%);
   pointer-events: none;
 }
 
-.sidebar-toggle[data-fechada="true"] {
-  left: 14px;
-}
-
 .conteudo-expandido {
   margin-left: 0 !important;
 }
 
-/* Quando a sidebar está fechada, move o botão para a borda */
-.sidebar-fechada ~ .conteudo ~ .sidebar-toggle,
-.layout:has(.sidebar-fechada) .sidebar-toggle {
-  left: 14px;
+/* ── Overlay para mobile drawer ── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 99;
+  animation: fadeIn 0.2s ease;
 }
 
-/* Override: quando sidebar fechada, botão fica na borda esquerda */
-.layout:has(.sidebar-fechada) .sidebar-toggle {
-  left: 14px;
-  border-radius: 0 8px 8px 0;
+.sidebar-overlay.visivel { display: block; }
+
+/* ── Topbar mobile (hamburguer) ── */
+.topbar-mobile {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  background: var(--cafe-escuro);
+  z-index: 150;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
+
+.topbar-mobile-titulo {
+  color: var(--cafe-claro);
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex: 1;
+}
+
+.btn-hamburger {
+  background: none;
+  border: none;
+  color: var(--creme);
+  cursor: pointer;
+  font-size: 1.4rem;
+  padding: 4px 8px;
+  line-height: 1;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.btn-hamburger:hover { background: rgba(255,255,255,0.1); }
 
 /* ── Carteira ── */
 .carteira {
@@ -644,4 +659,90 @@ body {
 .btn-saldo:hover {
   background: #d4a47a;
   transform: translateY(-1px);
+}
+
+/* ════════════════════════════════════════
+   RESPONSIVO
+   ════════════════════════════════════════ */
+
+/* ── Tablet (≤ 900px) ── */
+@media (max-width: 900px) {
+  .sidebar { width: 220px; }
+  .conteudo { margin-left: 220px; padding: 24px 20px; }
+  .sidebar-toggle { display: none; }          /* sem tab lateral no tablet */
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Mobile (≤ 640px): sidebar vira drawer ── */
+@media (max-width: 640px) {
+  /* Topbar aparece */
+  .topbar-mobile { display: flex; }
+
+  /* Conteúdo sobe para não ficar atrás da topbar */
+  .conteudo {
+    margin-left: 0 !important;
+    padding: 72px 16px 24px;
+    width: 100%;
+  }
+
+  /* Sidebar: drawer sobre o conteúdo */
+  .sidebar {
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  .sidebar.sidebar-aberta-mobile {
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  /* Esconde o toggle lateral no mobile */
+  .sidebar-toggle { display: none; }
+
+  /* Tabelas: scroll horizontal */
+  .tabela-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tabela { min-width: 520px; }
+  .tabela th, .tabela td { padding: 10px 12px; font-size: 0.8rem; }
+
+  /* Grids de 2 col viram 1 col */
+  .form-grid-2 { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+
+  /* Cards */
+  .card { padding: 16px; }
+  .stat-card { padding: 16px 18px; }
+  .stat-card .valor { font-size: 1.5rem; }
+
+  /* Modal ocupa mais tela */
+  .modal {
+    width: 96%;
+    padding: 24px 18px;
+    max-height: 92vh;
+  }
+
+  /* Topo de página */
+  .pagina-topo { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .pagina-titulo { font-size: 1.25rem; }
+
+  /* Barra de busca empilha */
+  .barra-busca { flex-direction: column; }
+  .barra-busca input,
+  .barra-busca select { width: 100%; }
+
+  /* Ações do modal empilham em telas muito pequenas */
+  .modal-acoes { flex-wrap: wrap; }
+  .modal-acoes .btn { flex: 1 1 auto; justify-content: center; }
+
+  /* Login */
+  .login-card { padding: 32px 20px; }
+  .login-card-wide { max-width: 100%; }
+}
+
+/* ── Celular muito pequeno (≤ 380px) ── */
+@media (max-width: 380px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .conteudo { padding: 68px 12px 20px; }
 }

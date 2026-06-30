@@ -132,14 +132,17 @@ function ModalSaldo({ onClose, onConfirmar }) {
 
 export default function Layout() {
   const navigate = useNavigate();
-  const [sidebarAberta, setSidebarAberta] = useState(true);
-  const [modalSaldo, setModalSaldo] = useState(false);
-  const [saldo, setSaldo] = useState(() => {
-    const s = localStorage.getItem('saldo');
-    return s ? parseFloat(s) : 0;
-  });
 
-  // Sincroniza saldo quando Pedidos.js desconta após uma compra
+  // Desktop: sidebar recolhível lateralmente
+  const [sidebarAberta, setSidebarAberta] = useState(true);
+  // Mobile: drawer sobreposto
+  const [drawerAberto, setDrawerAberto] = useState(false);
+  // Detecta se é mobile (≤640px)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 640);
+
+  const [modalSaldo, setModalSaldo] = useState(false);
+  const [saldo, setSaldo] = useState(() => parseFloat(localStorage.getItem('saldo') || '0'));
+
   useEffect(() => {
     function syncSaldo() {
       setSaldo(parseFloat(localStorage.getItem('saldo') || '0'));
@@ -147,6 +150,19 @@ export default function Layout() {
     window.addEventListener('saldo-atualizado', syncSaldo);
     return () => window.removeEventListener('saldo-atualizado', syncSaldo);
   }, []);
+
+  useEffect(() => {
+    function onResize() {
+      const mobile = window.innerWidth <= 640;
+      setIsMobile(mobile);
+      if (!mobile) setDrawerAberto(false); // fecha drawer ao virar desktop
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  // Fecha drawer ao navegar (mobile)
+  function fecharDrawer() { setDrawerAberto(false); }
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const isAdmin = usuario.role === 'ADMIN';
@@ -167,69 +183,113 @@ export default function Layout() {
 
   const roleLabel = { ADMIN: 'Administrador', FUNCIONARIO: 'Funcionário', CLIENTE: 'Cliente' };
 
+  // Classe da sidebar: no mobile usa drawer; no desktop usa recolhível
+  const sidebarClasse = [
+    'sidebar',
+    isMobile ? (drawerAberto ? 'sidebar-aberta-mobile' : '') : (sidebarAberta ? '' : 'sidebar-fechada'),
+  ].join(' ');
+
+  const navLinks = (
+    <nav className="sidebar-nav">
+      <span className="nav-section">Geral</span>
+      <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`} onClick={fecharDrawer}>
+        {icones.dashboard} Dashboard
+      </NavLink>
+      <NavLink to="/pedidos" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`} onClick={fecharDrawer}>
+        {icones.pedidos} Pedidos
+      </NavLink>
+      <NavLink to="/produtos" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`} onClick={fecharDrawer}>
+        {icones.produtos} Produtos
+      </NavLink>
+      {isInterno && (
+        <>
+          <span className="nav-section">Inventário</span>
+          <NavLink to="/estoque" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`} onClick={fecharDrawer}>
+            {icones.estoque} Movimentação
+          </NavLink>
+          <NavLink to="/categorias" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`} onClick={fecharDrawer}>
+            {icones.categorias} Categorias
+          </NavLink>
+        </>
+      )}
+      {isAdmin && (
+        <>
+          <span className="nav-section">Administração</span>
+          <NavLink to="/usuarios" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`} onClick={fecharDrawer}>
+            {icones.usuarios} Usuários
+          </NavLink>
+        </>
+      )}
+    </nav>
+  );
+
   return (
     <div className="layout">
-      {/* Botão toggle da sidebar */}
-      <button
-        className="sidebar-toggle" style={{ left: sidebarAberta ? 240 : 14 }}
-        onClick={() => setSidebarAberta(!sidebarAberta)}
-        title={sidebarAberta ? 'Ocultar menu' : 'Mostrar menu'}
-      >
-        {sidebarAberta ? '◀' : '▶'}
-      </button>
+      {/* ── Topbar mobile ── */}
+      <div className="topbar-mobile">
+        <button className="btn-hamburger" onClick={() => setDrawerAberto(true)} aria-label="Abrir menu">
+          ☰
+        </button>
+        <span className="topbar-mobile-titulo">☕ Cafeteria</span>
+        {(isCliente || isAdmin) && (
+          <span style={{ color: 'var(--cafe-claro)', fontSize: '0.82rem', fontWeight: 600 }}>
+            R$ {saldo.toFixed(2)}
+          </span>
+        )}
+      </div>
 
-      <aside className={`sidebar ${sidebarAberta ? '' : 'sidebar-fechada'}`}>
-        <div className="sidebar-logo">
-          <h2>☕ Cafeteria</h2>
-          <p>Sistema de Gestão</p>
+      {/* ── Overlay mobile ── */}
+      {isMobile && (
+        <div
+          className={`sidebar-overlay ${drawerAberto ? 'visivel' : ''}`}
+          onClick={fecharDrawer}
+        />
+      )}
+
+      {/* ── Botão toggle desktop ── */}
+      {!isMobile && (
+        <button
+          className="sidebar-toggle"
+          style={{ left: sidebarAberta ? 240 : 14 }}
+          onClick={() => setSidebarAberta(!sidebarAberta)}
+          title={sidebarAberta ? 'Ocultar menu' : 'Mostrar menu'}
+        >
+          {sidebarAberta ? '◀' : '▶'}
+        </button>
+      )}
+
+      {/* ── Sidebar / Drawer ── */}
+      <aside className={sidebarClasse}>
+        <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h2>☕ Cafeteria</h2>
+            <p>Sistema de Gestão</p>
+          </div>
+          {/* Botão fechar só no mobile */}
+          {isMobile && (
+            <button
+              onClick={fecharDrawer}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '1.4rem', cursor: 'pointer', lineHeight: 1, padding: '0 4px' }}
+              aria-label="Fechar menu"
+            >
+              ×
+            </button>
+          )}
         </div>
 
-        <nav className="sidebar-nav">
-          <span className="nav-section">Geral</span>
-          <NavLink to="/" end className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`}>
-            {icones.dashboard} Dashboard
-          </NavLink>
-          <NavLink to="/pedidos" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`}>
-            {icones.pedidos} Pedidos
-          </NavLink>
-          <NavLink to="/produtos" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`}>
-            {icones.produtos} Produtos
-          </NavLink>
-
-          {isInterno && (
-            <>
-              <span className="nav-section">Inventário</span>
-              <NavLink to="/estoque" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`}>
-                {icones.estoque} Movimentação
-              </NavLink>
-              <NavLink to="/categorias" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`}>
-                {icones.categorias} Categorias
-              </NavLink>
-            </>
-          )}
-
-          {isAdmin && (
-            <>
-              <span className="nav-section">Administração</span>
-              <NavLink to="/usuarios" className={({ isActive }) => `nav-link ${isActive ? 'ativo' : ''}`}>
-                {icones.usuarios} Usuários
-              </NavLink>
-            </>
-          )}
-        </nav>
+        {navLinks}
 
         <div className="sidebar-footer">
           <div className="usuario-nome">{usuario.nome}</div>
           <div className="usuario-role">{roleLabel[usuario.role] || usuario.role}</div>
 
-          {/* Carteira — visível para clientes e admins */}
           {(isCliente || isAdmin) && (
             <div className="carteira">
               <div className="carteira-saldo">
                 <span>💰 Saldo</span>
                 <strong>R$ {saldo.toFixed(2)}</strong>
               </div>
-              <button className="btn-saldo" onClick={() => setModalSaldo(true)}>
+              <button className="btn-saldo" onClick={() => { setModalSaldo(true); fecharDrawer(); }}>
                 + Adicionar Saldo
               </button>
             </div>
@@ -239,7 +299,8 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main className={`conteudo ${sidebarAberta ? '' : 'conteudo-expandido'}`}>
+      {/* ── Conteúdo principal ── */}
+      <main className={`conteudo ${!isMobile && !sidebarAberta ? 'conteudo-expandido' : ''}`}>
         <Outlet />
       </main>
 
