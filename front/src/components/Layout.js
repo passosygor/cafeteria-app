@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 
 const icones = {
@@ -138,6 +138,15 @@ export default function Layout() {
     const s = localStorage.getItem('saldo');
     return s ? parseFloat(s) : 0;
   });
+
+  // Sincroniza saldo quando Pedidos.js desconta após uma compra
+  useEffect(() => {
+    function syncSaldo() {
+      setSaldo(parseFloat(localStorage.getItem('saldo') || '0'));
+    }
+    window.addEventListener('saldo-atualizado', syncSaldo);
+    return () => window.removeEventListener('saldo-atualizado', syncSaldo);
+  }, []);
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const isAdmin = usuario.role === 'ADMIN';

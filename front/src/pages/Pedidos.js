@@ -4,6 +4,16 @@ import api from '../services/api';
 const STATUS_COR = { PENDENTE: 'amarelo', EM_PREPARO: 'cafe', PRONTO: 'verde', RETIRADO: 'cinza', CANCELADO: 'vermelho' };
 const STATUS_LABEL = { PENDENTE: 'Pendente', EM_PREPARO: 'Em Preparo', PRONTO: 'Pronto ✅', RETIRADO: 'Retirado', CANCELADO: 'Cancelado' };
 
+function getSaldo() {
+  return parseFloat(localStorage.getItem('saldo') || '0');
+}
+
+function setSaldo(valor) {
+  localStorage.setItem('saldo', Math.max(0, valor).toFixed(2));
+  // Notifica o Layout para atualizar o display do saldo
+  window.dispatchEvent(new Event('saldo-atualizado'));
+}
+
 export default function Pedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [produtos, setProdutos] = useState([]);
@@ -19,6 +29,7 @@ export default function Pedidos() {
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const isInterno = ['ADMIN', 'FUNCIONARIO'].includes(usuario.role);
+  const isCliente = usuario.role === 'CLIENTE';
 
   const carregar = useCallback(async () => {
     try {
@@ -59,8 +70,26 @@ export default function Pedidos() {
     const uid = isInterno ? usuarioId : usuario.id;
     if (!uid) return mostrarMensagem('erro', 'Selecione o cliente.');
     if (itens.some(i => !i.produtoId || i.quantidade < 1)) return mostrarMensagem('erro', 'Preencha todos os itens corretamente.');
+
+    const total = calcularTotal();
+
+    // Verificação de saldo — só para clientes
+    if (isCliente) {
+      const saldoAtual = getSaldo();
+      if (saldoAtual < total) {
+        mostrarMensagem('erro', `Saldo insuficiente. Seu saldo é R$ ${saldoAtual.toFixed(2)}, mas o pedido custa R$ ${total.toFixed(2)}.`);
+        return;
+      }
+    }
+
     try {
       await api.post('/pedidos', { usuarioId: Number(uid), itens, observacao });
+
+      // Desconta o saldo após pedido confirmado (só cliente)
+      if (isCliente) {
+        setSaldo(getSaldo() - total);
+      }
+
       mostrarMensagem('sucesso', 'Pedido criado com sucesso!');
       setModalAberto(false);
       carregar();
@@ -77,6 +106,9 @@ export default function Pedidos() {
   }
 
   const pedidosFiltrados = filtroStatus ? pedidos.filter(p => p.status === filtroStatus) : pedidos;
+  const total = calcularTotal();
+  const saldoAtual = getSaldo();
+  const saldoInsuficiente = isCliente && total > 0 && saldoAtual < total;
 
   return (
     <div>
@@ -182,12 +214,36 @@ export default function Pedidos() {
                 <label>Observação</label>
                 <input value={observacao} onChange={e => setObservacao(e.target.value)} placeholder="Ex: sem açúcar, para viagem..." />
               </div>
-              <div style={{ background: '#FDF6EC', borderRadius: 8, padding: '12px 16px', margin: '16px 0', fontWeight: 700, fontSize: '1.1rem', textAlign: 'right' }}>
-                Total: R$ {calcularTotal().toFixed(2)}
+
+              {/* Resumo de total + saldo (só cliente) */}
+              <div style={{ background: '#FDF6EC', borderRadius: 8, padding: '12px 16px', margin: '16px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1.1rem' }}>
+                  <span>Total do pedido</span>
+                  <span>R$ {total.toFixed(2)}</span>
+                </div>
+                {isCliente && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', marginTop: 6, color: saldoInsuficiente ? '#C62828' : '#2E7D32' }}>
+                    <span>Seu saldo</span>
+                    <span style={{ fontWeight: 600 }}>R$ {saldoAtual.toFixed(2)}</span>
+                  </div>
+                )}
+                {saldoInsuficiente && (
+                  <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#C62828', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    ⚠️ Saldo insuficiente — adicione R$ {(total - saldoAtual).toFixed(2)} na carteira para continuar.
+                  </div>
+                )}
               </div>
+
               <div className="modal-acoes">
                 <button type="button" className="btn btn-secundario" onClick={() => setModalAberto(false)}>Cancelar</button>
-                <button type="submit" className="btn btn-primario">Confirmar Pedido</button>
+                <button
+                  type="submit"
+                  className="btn btn-primario"
+                  disabled={saldoInsuficiente}
+                  style={saldoInsuficiente ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                >
+                  Confirmar Pedido
+                </button>
               </div>
             </form>
           </div>
